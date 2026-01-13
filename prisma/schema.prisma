@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  clerkId          String   @unique
+  email            String   @unique
+  isPro            Boolean  @default(false)
+  stripeCustomerId String?  @unique
+  
+  chats            Chat[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  name      String
+  pdfName   String?
+  pdfUrl    String?
+  
+  userId    String
+  user      User      @relation(fields: [userId], references: [clerkId])
+  
+  messages  Message[]
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  role      String   // user, assistant
+  content   String   @db.Text
+  
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([chatId])
+}
