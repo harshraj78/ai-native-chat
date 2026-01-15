@@ -7,17 +7,24 @@ import { ChatSidebar } from '@/components/chat/ChatSidebar';
 import { UserButton, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
-import { Menu, MessageSquare, Sparkles } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
+import { Menu, Sparkles, EyeIcon, EyeOffIcon } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '../components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { PDFViewer } from '@/components/pdf-viewer';
+
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 export default function Home() {
   const [chatId, setChatId] = useState<string | null>(null);
   const [chats, setChats] = useState<any[]>([]);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
-  // Sheet handles state internally or via open prop. We can use open prop for manual control if needed, 
-  // or just let SheetTrigger handle it. Using state allows us to close it programmatically on selection.
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activePage, setActivePage] = useState<number | null>(null);
+  const [isPdfVisible, setIsPdfVisible] = useState(true);
+  const [mobileTab, setMobileTab] = useState<'chat' | 'pdf'>('chat');
+
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const fetchChats = async () => {
     try {
@@ -42,6 +49,17 @@ export default function Home() {
     fetchChats();
   };
 
+  const handleCitationClick = (page: number) => {
+    setActivePage(page);
+    if (isDesktop) {
+      setIsPdfVisible(true);
+    } else {
+      setMobileTab('pdf'); // Switch to PDF tab on mobile
+    }
+  };
+
+  const currentChat = chats.find(c => c.id === chatId);
+
   return (
     <main className="flex min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background overflow-hidden relative">
       {/* Ambient Background Effects */}
@@ -61,6 +79,7 @@ export default function Home() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-[85%] sm:w-[350px]">
+                <SheetTitle className="hidden">Navigation Menu</SheetTitle>
                 <ChatSidebar
                   chats={chats}
                   currentChatId={chatId}
@@ -81,6 +100,41 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Mobile Tab Switcher (Visible only on mobile if PDF exists) */}
+          {!isDesktop && currentChat?.pdfUrl && (
+            <div className="flex items-center bg-secondary/50 rounded-lg p-1 border border-border/50">
+              <Button
+                variant={mobileTab === 'pdf' ? 'secondary' : 'ghost'}
+                size="sm"
+                className={cn("h-7 px-3 text-xs", mobileTab === 'pdf' && "bg-background shadow-sm")}
+                onClick={() => setMobileTab('pdf')}
+              >
+                PDF
+              </Button>
+              <Button
+                variant={mobileTab === 'chat' ? 'secondary' : 'ghost'}
+                size="sm"
+                className={cn("h-7 px-3 text-xs", mobileTab === 'chat' && "bg-background shadow-sm")}
+                onClick={() => setMobileTab('chat')}
+              >
+                Chat
+              </Button>
+            </div>
+          )}
+
+          {/* Desktop Toggle Button */}
+          {isDesktop && currentChat?.pdfUrl && (
+            <Button
+              variant={isPdfVisible ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setIsPdfVisible(!isPdfVisible)}
+              className="hidden md:flex gap-2"
+            >
+              {isPdfVisible ? <EyeOffIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+              {isPdfVisible ? "Hide PDF" : "Show PDF"}
+            </Button>
+          )}
+
           <ModeToggle />
           <SignedIn>
             <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "w-8 h-8 ring-2 ring-border" } }} />
@@ -123,7 +177,7 @@ export default function Home() {
 
                 <FileUpload onUploadComplete={handleNewChatCreated} />
 
-                {/* Feature Pills */} {/* Optional decorative elements */}
+                {/* Feature Pills */}
                 <div className="flex flex-wrap justify-center gap-3 pt-8 opacity-70">
                   {['Instant Analysis', 'Secure & Private', 'AI-Powered'].map((feature) => (
                     <div key={feature} className="px-3 py-1 rounded-full border bg-secondary/50 text-xs font-medium text-muted-foreground">
@@ -134,10 +188,41 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="w-full h-full flex flex-col items-center p-4 lg:p-6 animate-zoom-in">
-              <div className="w-full h-full max-w-4xl shadow-2xl rounded-2xl overflow-hidden border border-border/50 ring-1 ring-black/5 dark:ring-white/5">
-                <ChatInterface chatId={chatId} />
-              </div>
+            <div className="w-full h-full flex flex-col bg-background">
+              {/* Mobile Layout: Tabs */}
+              {!isDesktop && currentChat?.pdfUrl ? (
+                <div className="w-full h-full flex flex-col relative">
+                  <div className={cn("absolute inset-0 w-full h-full transition-opacity duration-300", mobileTab === 'pdf' ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}>
+                    <PDFViewer url={currentChat.pdfUrl} page={activePage} />
+                  </div>
+                  <div className={cn("absolute inset-0 w-full h-full transition-opacity duration-300 bg-background", mobileTab === 'chat' ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}>
+                    <ChatInterface chatId={chatId} onCitationClick={handleCitationClick} />
+                  </div>
+                </div>
+              ) : (
+                // Desktop or No PDF
+                <>
+                  {currentChat?.pdfUrl && isPdfVisible ? (
+                    <PanelGroup direction="horizontal" className="h-full w-full border-t border-border/40">
+                      <Panel defaultSize={45} minSize={20} maxSize={60} className="bg-muted/10">
+                        <PDFViewer url={currentChat.pdfUrl} page={activePage} />
+                      </Panel>
+                      <PanelResizeHandle className="bg-border/50 hover:bg-primary/50 transition-colors w-1.5" />
+                      <Panel defaultSize={55} minSize={30}>
+                        <div className="w-full h-full flex flex-col bg-background/50 backdrop-blur-sm min-w-0 overflow-hidden">
+                          <ChatInterface chatId={chatId} onCitationClick={handleCitationClick} />
+                        </div>
+                      </Panel>
+                    </PanelGroup>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center p-4 lg:p-6 animate-zoom-in">
+                      <div className="w-full h-full max-w-4xl shadow-2xl rounded-2xl overflow-hidden border border-border/50 ring-1 ring-black/5 dark:ring-white/5 relative">
+                        <ChatInterface chatId={chatId} onCitationClick={handleCitationClick} />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

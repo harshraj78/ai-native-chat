@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
                 id: true,
                 name: true,
                 pdfName: true,
+                pdfUrl: true,
                 createdAt: true,
             }
         });

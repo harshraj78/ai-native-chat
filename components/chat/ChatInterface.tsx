@@ -18,9 +18,10 @@ interface Message {
 
 interface ChatInterfaceProps {
     chatId: string;
+    onCitationClick?: (page: number) => void;
 }
 
-export function ChatInterface({ chatId: initialChatId }: ChatInterfaceProps) {
+export function ChatInterface({ chatId: initialChatId, onCitationClick }: ChatInterfaceProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -96,6 +97,32 @@ export function ChatInterface({ chatId: initialChatId }: ChatInterfaceProps) {
         toast.success("Copied to clipboard");
     };
 
+    const renderMessageContent = (content: string) => {
+        const parts = content.split(/(\[\[Page \d+\]\])/g);
+        return parts.map((part, index) => {
+            const match = part.match(/\[\[Page (\d+)\]\]/);
+            if (match) {
+                const pageNum = parseInt(match[1]);
+                return (
+                    <button
+                        key={index}
+                        onClick={() => onCitationClick?.(pageNum)}
+                        className="inline-flex items-center gap-1 mx-1 px-1.5 py-0.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded cursor-pointer transition-colors"
+                    >
+                        <span className="underline decoration-dotted">Page {pageNum}</span>
+                    </button>
+                );
+            }
+            return (
+                <span key={index} className="inline">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+                        p: ({ node, ...props }) => <span {...props} />,
+                    }}>{part}</ReactMarkdown>
+                </span>
+            );
+        });
+    };
+
     return (
         <div className="flex flex-col h-full relative bg-transparent">
             {/* Header Area inside Chat Interface if needed, distinct from main header */}
@@ -165,34 +192,16 @@ export function ChatInterface({ chatId: initialChatId }: ChatInterfaceProps) {
                                     className={cn(
                                         "px-5 py-3.5 shadow-sm text-sm leading-relaxed",
                                         m.role === 'user'
-                                            ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
-                                            : "bg-card border border-border/50 text-card-foreground rounded-2xl rounded-tl-sm glass-card prose prose-sm dark:prose-invert max-w-none break-words"
+                                            ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm break-words overflow-x-hidden"
+                                            : "bg-card border border-border/50 text-card-foreground rounded-2xl rounded-tl-sm glass-card prose prose-sm dark:prose-invert max-w-none break-words overflow-x-hidden"
                                     )}
                                 >
                                     {m.role === 'user' ? (
                                         m.content
                                     ) : (
-                                        <ReactMarkdown
-                                            remarkPlugins={[remarkGfm]}
-                                            components={{
-                                                code({ node, className, children, ...props }) {
-                                                    const match = /language-(\w+)/.exec(className || '')
-                                                    return match ? (
-                                                        <div className="rounded-md bg-muted/50 border p-1 my-2">
-                                                            <code className={className} {...props}>
-                                                                {children}
-                                                            </code>
-                                                        </div>
-                                                    ) : (
-                                                        <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-xs" {...props}>
-                                                            {children}
-                                                        </code>
-                                                    )
-                                                }
-                                            }}
-                                        >
-                                            {m.content}
-                                        </ReactMarkdown>
+                                        <div className="prose prose-sm dark:prose-invert max-w-none break-words overflow-x-hidden">
+                                            {renderMessageContent(m.content)}
+                                        </div>
                                     )}
                                 </div>
 

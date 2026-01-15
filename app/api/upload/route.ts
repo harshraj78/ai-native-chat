@@ -8,6 +8,8 @@ import { parsePDF } from '@/lib/pdf-loader';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { checkSubscription } from '@/lib/subscription';
 
+import { storage } from '@/lib/storage';
+
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
@@ -57,48 +59,70 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
+        // 0. Save File to Storage (New Step)
+        step = 'file_save';
+        let pdfUrl = '';
+        try {
+            pdfUrl = await storage.upload(file);
+            console.log("DEBUG: File saved at", pdfUrl);
+        } catch (e: any) {
+            console.error("DEBUG: File save failed", e);
+            // Proceeding without saving file for now if it fails, or throw?
+            // detailed flow: strict fail if storage fails
+            throw new Error(`File storage failed: ${e.message}`);
+        }
+
         // 1. Convert File to Buffer and parse text
         step = 'pdf_parse';
-        let text;
+        let pages: { page: number; content: string }[] = [];
         try {
             const buffer = Buffer.from(await file.arrayBuffer());
-            text = await parsePDF(buffer);
+            pages = await parsePDF(buffer);
         } catch (e: any) {
             throw new Error(`PDF Parsing failed: ${e.message}`);
         }
 
-        // 2. Split text into chunks
+        // 2. Split text into chunks (PER PAGE)
         step = 'text_split';
         const splitter = new RecursiveCharacterTextSplitter({
             chunkSize: 1000,
             chunkOverlap: 200,
         });
 
-        const docs = await splitter.createDocuments([text], [{ source: file.name }]);
+        let allDocs: any[] = [];
+
+        for (const page of pages) {
+            const pageDocs = await splitter.createDocuments([page.content], [{
+                source: file.name,
+                page: page.page // ACUAL PAGE NUMBER
+            }]);
+            allDocs.push(...pageDocs);
+        }
 
         // 3. Generate embeddings
         step = 'embeddings';
         let vectors;
         try {
-            vectors = await Promise.all(
-                docs.map(async (doc, i) => {
-                    const embedding = await embeddings.embedQuery(doc.pageContent);
+            // Batch embed all chunks
+            const chunks = allDocs.map(d => d.pageContent);
+            const embeddingsBatch = await embeddings.embedDocuments(chunks);
 
-                    // Ensure metadata is flat and compatible with Pinecone
-                    const metadata = {
-                        text: doc.pageContent,
-                        source: file.name,
-                        page: i,
-                        userId,
-                    };
+            vectors = allDocs.map((doc, i) => {
+                // Ensure metadata is flat and compatible with Pinecone
+                const metadata = {
+                    text: doc.pageContent,
+                    source: file.name,
+                    page: doc.metadata.page, // Use the page from metadata
+                    userId,
+                };
 
-                    return {
-                        id: `${file.name}-${i}-${Date.now()}`,
-                        values: embedding,
-                        metadata,
-                    };
-                })
-            );
+                return {
+                    id: `${file.name}-${i}-${Date.now()}`,
+                    values: embeddingsBatch[i],
+                    metadata,
+                };
+            });
+
         } catch (e: any) {
             throw new Error(`Embedding Generation failed (Google AI): ${e.message}`);
         }
@@ -123,13 +147,14 @@ export async function POST(req: NextRequest) {
                 name: file.name,
                 userId,
                 pdfName: file.name,
+                pdfUrl: pdfUrl, // Saving the URL
             }
         });
 
         return NextResponse.json({
             success: true,
             chatId: chat.id,
-            message: `Processed ${docs.length} chunks from ${file.name}`
+            message: `Processed ${allDocs.length} chunks from ${file.name}`
         });
 
     } catch (error: any) {

@@ -94,7 +94,11 @@ export async function POST(req: NextRequest) {
         });
 
         const context = queryResponse.matches
-            .map((match) => (match.metadata as any).text)
+            .map((match) => {
+                const meta = match.metadata as any;
+                // Metadata is now 1-based from upload, so no need to add 1
+                return `${meta.text}\n(Page ${meta.page ? meta.page : 'Unknown'})`;
+            })
             .join('\n\n---\n\n');
 
         console.log("DEBUG [Chat]: Context found (" + queryResponse.matches.length + " chunks)");
@@ -121,10 +125,11 @@ export async function POST(req: NextRequest) {
 
         Instructions:
         1. Use the provided context to answer the question.
-        2. If the user asks for an opinion (e.g., "is this good?"), provide a constructive analysis based on the content found in the context.
-        3. Do not be overly restrictive. If the answer can be inferred from the context, do so.
-        4. If the context contains a resume, analyze it as a professional recruiter would.
-        5. Only say "I don't have enough information" if the context is completely irrelevant to the question.
+        2. Answer naturally and fluently.
+        3. If the user asks for a summary or to "start", prioritize information from the beginning of the document (Introduction, Abstract, Step 1) if available in the context.
+        4. If the user asks for an opinion, provide a constructive analysis based on the content found in the context.
+        5. Do not be overly restrictive. If the answer can be inferred from the context, do so.
+        6. Only say "I don't have enough information" if the context is completely irrelevant.
         `;
 
         const result = await model.generateContent(prompt);

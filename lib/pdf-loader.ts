@@ -14,7 +14,7 @@ if (typeof Promise.withResolvers === 'undefined') {
     };
 }
 
-export async function parsePDF(buffer: Buffer): Promise<string> {
+export async function parsePDF(buffer: Buffer): Promise<{ page: number; content: string }[]> {
     try {
         console.log("DEBUG: Loading PDF via pdfjs-dist v3 (CommonJS)...");
 
@@ -25,14 +25,13 @@ export async function parsePDF(buffer: Buffer): Promise<string> {
         const loadingTask = pdfjsLib.getDocument({
             data: new Uint8Array(buffer),
             useSystemFonts: true,
-            // Force disable worker to avoid external file dependency
             disableFontFace: true,
         });
 
         const doc = await loadingTask.promise;
         console.log("DEBUG: PDF Loaded. Pages:", doc.numPages);
 
-        let fullText = '';
+        const pages: { page: number; content: string }[] = [];
 
         for (let i = 1; i <= doc.numPages; i++) {
             const page = await doc.getPage(i);
@@ -43,13 +42,16 @@ export async function parsePDF(buffer: Buffer): Promise<string> {
                 .map((item: any) => item.str)
                 .join(' ');
 
-            fullText += pageText + ' ';
+            pages.push({
+                page: i,
+                content: pageText
+            });
 
             // Release page resources
             if (page.cleanup) page.cleanup();
         }
 
-        return fullText.trim();
+        return pages;
 
     } catch (e: any) {
         console.error("PDF Parsing Error (pdfjs-dist v3):", e);
