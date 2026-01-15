@@ -26,6 +26,9 @@ model Chat {
   pdfName   String?
   pdfUrl    String?
   
+  shareId   String?   @unique
+  isShared  Boolean   @default(false)
+  
   userId    String
   user      User      @relation(fields: [userId], references: [clerkId])
   
