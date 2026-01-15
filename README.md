@@ -18,8 +18,6 @@ you can show/hide your pdf as well:-
 
 An intelligent, AI-powered "Chat with your PDF" application. Upload documents and have natural conversations with them using RAG (Retrieval-Augmented Generation).
 
-![Project Preview](/placeholder-image.png)
-
 ## 🚀 Features
 
 -   **Deep PDF Understanding**: Uses Google's Gemini Pro AI to analyze and summarize entire documents.
