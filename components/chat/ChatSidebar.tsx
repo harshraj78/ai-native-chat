@@ -225,7 +225,7 @@ export function ChatSidebar({ chats, currentChatId, onSelectChat, onNewChat, isL
 
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-100 lg:opacity-0 lg:group-hover/item:opacity-100 transition-opacity absolute right-1 top-2 bg-background/50 backdrop-blur-sm shadow-sm">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 absolute right-1 top-2 bg-background/50 backdrop-blur-sm shadow-sm">
                                             <MoreVertical className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
