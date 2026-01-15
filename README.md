@@ -6,3 +6,11 @@
 <img width="1919" height="861" alt="image" src="https://github.com/user-attachments/assets/938dbc6b-ef67-4f1d-a830-98ca008d7422" />
 <img width="1919" height="861" alt="image" src="https://github.com/user-attachments/assets/1e8d42c2-d4ee-43d3-b123-ddda8e7ec705" />
 
+<img width="1919" height="862" alt="image" src="https://github.com/user-attachments/assets/3a1f5127-ac92-40dd-b03d-0e267958978f" />
+<img width="1919" height="862" alt="image" src="https://github.com/user-attachments/assets/f8d15de3-bc5c-47ba-8d6f-7de854fdfa0b" />
+
+you can show/hide your pdf as well:-
+<img width="1919" height="862" alt="image" src="https://github.com/user-attachments/assets/fd24e906-9490-4deb-8977-7a8d300a4802" />
+<img width="1919" height="868" alt="image" src="https://github.com/user-attachments/assets/b3df9352-79e5-44c5-bf1c-41e8ffc7d7f8" />
+
+
