@@ -14,3 +14,84 @@ you can show/hide your pdf as well:-
 <img width="1919" height="868" alt="image" src="https://github.com/user-attachments/assets/b3df9352-79e5-44c5-bf1c-41e8ffc7d7f8" />
 
 
+# AI-Native PDF Chatbot 🧠💬
+
+An intelligent, AI-powered "Chat with your PDF" application. Upload documents and have natural conversations with them using RAG (Retrieval-Augmented Generation).
+
+![Project Preview](/placeholder-image.png)
+
+## 🚀 Features
+
+-   **Deep PDF Understanding**: Uses Google's Gemini Pro AI to analyze and summarize entire documents.
+-   **RAG Pipeline**: Vector embeddings (Google GenAI) + Pinecone Vector DB for accurate, context-aware answers.
+-   **Smart Split-View**:
+    -   **Desktop**: Resizable split-screen (PDF on left, Chat on right).
+    -   **Mobile**: Adaptive Tab-based interface for seamless switching.
+-   **Real-time Streaming**: AI responses stream character-by-character for a polished feel.
+-   **Secure**: Row Level Security ensures users only see their own chats.
+-   **PDF Viewer**: Custom PDF rendering with continuous scrolling and zoom.
+
+## 🛠️ Tech Stack
+
+-   **Frontend**: Next.js 16 (App Router), Tailwind CSS, Framer Motion, Radix UI.
+-   **Backend**: Next.js Server Actions, Prisma ORM.
+-   **Database**: PostgreSQL (Neon Serverless).
+-   **Vector DB**: Pinecone.
+-   **AI Model**: Google Gemini Pro (via LangChain).
+-   **Auth**: Clerk (Middleware protected).
+-   **Payment**: Stripe (Checkout sessions).
+
+## ⚙️ Environment Variables
+
+Create a \`.env.local\` file in the root directory:
+
+\`\`\`env
+# Database (Neon / PostgreSQL)
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+
+# Auth (Clerk)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
+
+# AI & Vectors
+GOOGLE_API_KEY="AIzaSy..."
+PINECONE_API_KEY="pc_..."
+PINECONE_INDEX_NAME="ai-native-chat"
+
+# Payments
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+\`\`\`
+
+## 🏃‍♂️ Getting Started
+
+1.  **Clone the repo**
+    \`\`\`bash
+    git clone https://github.com/your-username/ai-native-chat.git
+    cd ai-native-chat
+    \`\`\`
+
+2.  **Install dependencies**
+    \`\`\`bash
+    npm install
+    # or
+    yarn install
+    \`\`\`
+
+3.  **Setup Database**
+    \`\`\`bash
+    npx prisma generate
+    npx prisma db push
+    \`\`\`
+
+4.  **Run the app**
+    \`\`\`bash
+    npm run dev
+    \`\`\`
+
+## 📄 License
+
+MIT License. Copyright © 2026.
+
