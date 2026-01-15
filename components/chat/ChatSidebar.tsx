@@ -251,7 +251,7 @@ export function ChatSidebar({ chats, currentChatId, onSelectChat, onNewChat, isL
             </ScrollArea>
 
             <div className="p-4 border-t border-border/20 text-xs text-center text-muted-foreground/60">
-                AI-Native Chat &copy; 2024
+                AI-Native Chat &copy; 2026
             </div>
 
             {/* Rename Dialog */}
